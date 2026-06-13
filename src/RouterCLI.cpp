@@ -1,5 +1,4 @@
 #include "RouterCLI.hpp"
-#include "CLIUtils.hpp"
 #include "EventProcessor.hpp"
 #include <unistd.h>
 #include <iostream>
