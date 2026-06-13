@@ -132,48 +132,6 @@ void RoutingTable::explainLookup(uint32_t dest_ip) {
     }
 }
 
-// src/RoutingTable.cpp
-void RoutingTable::removeRoutesByInterface(const std::string& intfName) {
-    std::cout<<"removing interface: "<<intfName<<std::endl; 
-    // 1. First, mark the interface itself as DOWN
-    for (auto& intf : interfaces) {
-        if (intf.name == intfName) {
-            intf.is_up = false;
-        }
-    }
-
-    // 2. Remove routes that rely on this interface
-    routes.erase(std::remove_if(routes.begin(), routes.end(),
-        [&](const UnifiedRoute& r) {
-            // If the route IS this interface (Connected) OR uses it as gateway
-            return (r.next_hop == intfName);
-        }), routes.end());
-}
-
-// Add these to src/RoutingTable.cpp
-
-/*void RoutingTable::updateInterfaceState(const std::string& name, bool is_up) {
-    for (auto& intf : interfaces) {
-        if (intf.name == name) {
-            intf.is_up = is_up;
-            std::cout << "Interface " << name << " state changed to " << (is_up ? "UP" : "DOWN") << std::endl;
-            return;
-        }
-    }
-}*/
-
-/*void RoutingTable::removeRoute(const std::string& prefix_str) {
-    // Parse the input "172.16.0.0/16" into a binary format
-    std::cout<<"remove route: "<<prefix_str<<std::endl;
-    IPPrefix target = IPPrefix::fromString(prefix_str); 
-    
-    routes.erase(std::remove_if(routes.begin(), routes.end(),
-        [&](const UnifiedRoute& r) {
-            // Compare binary prefix AND mask length for an exact match
-            return (r.prefix_bin == target.addr && r.prefix_len == target.prefix_len);
-        }), routes.end());
-}*/
-
 bool RoutingTable::isInterfaceUp(const std::string& name) {
     for (const auto& intf : interfaces) {
         if (intf.name == name) {
@@ -211,41 +169,31 @@ void RoutingTable::updateInterfaceState(const std::string& name, bool is_up) {
 }
 
 void RoutingTable::removeRoute(const std::string& prefix) {
-    std::lock_guard<std::mutex> lock(mtx);
-    routes.erase(std::remove_if(routes.begin(), routes.end(), 
-        [&](const UnifiedRoute& r) { 
-            // Simplified match logic
-            return (r.prefix_len != 0); // Add your prefix matching logic here
-        }), routes.end());
+    // Use std::remove_if to find the specific route by string match
+    auto it = std::remove_if(routes.begin(), routes.end(), 
+        [&](const UnifiedRoute& r) {
+            // Assuming your UnifiedRoute stores the original string prefix
+            // You might need to compare r.prefix_bin/len or store the string
+            return (formatPrefix(r) == prefix); 
+        });
+
+    if (it != routes.end()) {
+        routes.erase(it, routes.end());
+        std::cout << "[SUCCESS] Removed route: " << prefix << std::endl;
+    } else {
+        std::cout << "[WARNING] Route not found: " << prefix << std::endl;
+    }
 }
 
-void RoutingTable::saveState(const std::string& intfFile, const std::string& routeFile) {
-    // --- Save Interfaces ---
-    nlohmann::json j_intf = nlohmann::json::array();
-    for (const auto& intf : interfaces) {
-        j_intf.push_back({
-            {"name", intf.name},
-            {"ip_prefix", intf.ip_prefix},
-            {"is_up", intf.is_up},
-            {"rx_packets", intf.rx_packets},
-            {"tx_packets", intf.tx_packets}
-        });
-    }
-    std::ofstream oIntf(intfFile);
-    oIntf << j_intf.dump(4); // 4-space indentation for readability
+std::string RoutingTable::formatPrefix(const UnifiedRoute& r) {
+    // 1. Convert binary IP back to string
+    struct in_addr addr;
+    addr.s_addr = htonl(r.prefix_bin); // Convert host-order back to network-order
+    char ip_str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &addr, ip_str, INET_ADDRSTRLEN);
 
-    // --- Save Routes ---
-    nlohmann::json j_routes = nlohmann::json::array();
-    for (const auto& r : routes) {
-        j_routes.push_back({
-            {"prefix_bin", r.prefix_bin},
-            {"prefix_len", r.prefix_len},
-            {"next_hop", r.next_hop},
-            {"type", r.type}
-        });
-    }
-    std::ofstream oRoute(routeFile);
-    oRoute << j_routes.dump(4);
-
-    std::cout << "[INFO] State saved to disk." << std::endl;
+    // 2. Append the prefix length
+    std::stringstream ss;
+    ss << ip_str << "/" << r.prefix_len;
+    return ss.str();
 }

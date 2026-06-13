@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <mutex>
 #include "Utils.hpp"
-#include "Interface.hpp"
+#include "Route.hpp"
 
 struct UnifiedRoute {
     uint32_t prefix_bin;
@@ -21,11 +21,10 @@ public:
     void addRoute(const UnifiedRoute& r) { routes.push_back(r); }
     void loadInterfaces(const std::string& filename);
     void loadRoutes(const std::string& filename);
-    void saveState(const std::string& intfFile, const std::string& routeFile);
+    std::string formatPrefix(const UnifiedRoute& r);
     
     // State management for events
     void updateInterfaceState(const std::string& name, bool is_up);
-    void removeRoutesByInterface(const std::string& intfName);
     void removeRoute(const std::string& prefix);
     
     UnifiedRoute* lookup(uint32_t dest_ip);

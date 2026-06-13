@@ -1,27 +1,13 @@
 #include "RouterCLI.hpp"
 #include "CLIUtils.hpp"
 #include "EventProcessor.hpp"
-#include <sys/inotify.h>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <iomanip>
+#include <arpa/inet.h>
 #include <nlohmann/json.hpp>
-
-void watchAndReload(RoutingTable& rt) {
-    int fd = inotify_init();
-    int wd = inotify_add_watch(fd, "input", IN_MODIFY);
-    char buffer[4096];
-
-    while (true) {
-        read(fd, buffer, sizeof(buffer));
-        usleep(200000); // Debounce: wait 200ms for file write to complete
-
-        std::cout << "\n[WATCHER] Configuration change detected. Reloading..." << std::endl;
-        rt.loadInterfaces("input/interfaces.json");
-        rt.loadRoutes("input/static_routes.json");
-    }
-}
 
 void runShell(RoutingTable& rt) {
     std::string line;
@@ -36,19 +22,21 @@ void runShell(RoutingTable& rt) {
         ss >> cmd;
 
         if (cmd == "replay-events") {
-            // std::string dir;
-            // ss >> dir; // e.g., "./sample"
+            std::string path = "input/events.json";
+            ss >> path; // e.g., "events.json"
             
-            std::ifstream file("input/events.json");
+            std::ifstream file(path);
             if (!file.is_open()) {
-                std::cerr << "Error: Could not open events.json" << std::endl;
+                std::cerr << "Error: Could not open " << path << std::endl;
                 continue;
             }
             
             nlohmann::json j;
             file >> j;
             EventProcessor processor(rt);
-            for (const auto& event : j["events"]) {
+            
+            // Iterate through the array directly
+            for (const auto& event : j) {
                 processor.processEvent(event);
             }
             std::cout << "Event replay complete." << std::endl;
@@ -75,4 +63,48 @@ void runShell(RoutingTable& rt) {
             std::cout << "Unknown command: " << cmd << std::endl;
         }
     }
+}
+
+void printInterfaceTable(const std::vector<Interface>& intfList) {
+    std::cout << std::left << std::setw(15) << "Name" 
+              << std::setw(20) << "IP/Prefix" 
+              << std::setw(10) << "Status" 
+              << std::setw(10) << "RX" 
+              << std::setw(10) << "TX" << "\n";
+    std::cout << std::string(65, '-') << "\n";
+
+    for (const auto& entry : intfList) {
+        std::cout << std::left << std::setw(15) << entry.name 
+                  << std::setw(20) << entry.ip_prefix 
+                  << std::setw(10) << (entry.is_up ? "UP" : "DOWN") 
+                  << std::setw(10) << entry.rx_packets 
+                  << std::setw(10) << entry.tx_packets << "\n";
+    }
+}
+
+void printRouteTable(const std::vector<UnifiedRoute>& routeList) {
+    // Header
+    std::cout << std::left << std::setw(20) << "Prefix" 
+              << std::setw(15) << "Next Hop" 
+              << std::setw(10) << "Type" << "\n";
+    std::cout << std::string(45, '-') << "\n";
+
+    for (const auto& route : routeList) {
+        // Build the combined string here
+        std::string full_prefix = binToIP(route.prefix_bin) + "/" + std::to_string(route.prefix_len);
+
+        // Now print the single string with the width
+        std::cout << std::left 
+                  << std::setw(20) << full_prefix 
+                  << std::setw(15) << route.next_hop 
+                  << std::setw(10) << route.type << "\n";
+    }
+}
+
+std::string binToIP(uint32_t bin_ip) {
+    struct in_addr addr;
+    addr.s_addr = htonl(bin_ip); // Convert back to network byte order
+    char str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &addr, str, INET_ADDRSTRLEN);
+    return std::string(str);
 }
