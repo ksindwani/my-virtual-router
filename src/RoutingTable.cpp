@@ -8,6 +8,7 @@
 using json = nlohmann::json;
 
 void RoutingTable::loadInterfaces(const std::string& file) {
+    interfaces.clear();
     std::ifstream f(file);
     if (!f.is_open()) return;
 
@@ -35,9 +36,8 @@ void RoutingTable::loadInterfaces(const std::string& file) {
     }
 }
 
-#include <arpa/inet.h>
-
 void RoutingTable::loadRoutes(const std::string& file) {
+    routes.clear();
     std::ifstream f(file);
     if (!f.is_open()) return;
 
