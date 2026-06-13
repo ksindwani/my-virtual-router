@@ -1,11 +1,17 @@
 #pragma once
 #include <string>
-#include <cstdint>
 
 struct Interface {
     std::string name;
-    std::string ip_prefix; // e.g., "192.168.1.1/24"
+    std::string ip_prefix;
     bool is_up;
-    uint64_t rx_packets;
-    uint64_t tx_packets;
+    int rx_packets;
+    int tx_packets;
+
+    // Optional: Constructor for easier creation
+    Interface(std::string n, std::string ip, bool up, int rx, int tx)
+        : name(n), ip_prefix(ip), is_up(up), rx_packets(rx), tx_packets(tx) {}
+    
+    // Default constructor for vector operations
+    Interface() : is_up(false), rx_packets(0), tx_packets(0) {}
 };

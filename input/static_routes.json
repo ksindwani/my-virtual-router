@@ -1,22 +1,5 @@
-{
-  "static_routes": [
-    { 
-      "prefix": "172.16.0.0/16", 
-      "next_hop": "192.168.1.254", 
-      "pref": 10, 
-      "type": "Static" 
-    },
-    { 
-      "prefix": "8.8.8.0/24", 
-      "next_hop": "10.0.0.254", 
-      "pref": 5, 
-      "type": "Static" 
-    },
-    { 
-      "prefix": "0.0.0.0/0", 
-      "next_hop": "192.168.1.254", 
-      "pref": 100, 
-      "type": "Static" 
-    }
-  ]
-}
+[
+  { "prefix": "172.16.0.0/16",  "next_hop_ip": "172.16.0.1", "preference": 10 },
+  { "prefix": "192.168.1.0/24", "egress_interface": "eth1",  "preference": 10 },
+  { "prefix": "172.16.10.0/24", "egress_interface": "eth2",  "preference": 20 }
+]

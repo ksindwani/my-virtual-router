@@ -17,7 +17,9 @@ class RoutingTable {
     std::vector<Interface> interfaces; // Track interfaces state
 public:
     void addRoute(const UnifiedRoute& r) { routes.push_back(r); }
-    void loadFromJSON(const std::string& intfFile, const std::string& routeFile);
+    void loadInterfaces(const std::string& filename);
+    void loadRoutes(const std::string& filename);
+    void saveState(const std::string& intfFile, const std::string& routeFile);
     
     // State management for events
     void updateInterfaceState(const std::string& name, bool is_up);
@@ -28,4 +30,6 @@ public:
     void explainLookup(uint32_t dest_ip);
     const std::vector<UnifiedRoute>& getRoutes() const { return routes; }
     const std::vector<Interface>& getInterfaces() const { return interfaces; }
+    bool isInterfaceUp(const std::string& name);
+    bool isMatch(uint32_t dest_ip, const UnifiedRoute& r);
 };

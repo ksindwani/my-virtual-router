@@ -8,7 +8,8 @@
 int main(int argc, char* argv[]) {
     if (argc < 2) return 1;
     RoutingTable rt;
-    rt.loadFromJSON("input/interfaces.json", "input/static_routes.json");
+    rt.loadInterfaces("input/interfaces.json");
+    rt.loadRoutes("input/static_routes.json");
 
     std::string cmd = argv[1];
     if (cmd == "show-routes") {
@@ -26,6 +27,7 @@ int main(int argc, char* argv[]) {
             std::cout<<"event change for evt: "<<event<<std::endl;
             processor.processEvent(event);
         }
+        //rt.saveState("input/interfaces.json", "input/static_routes.json");
         std::cout << "Event replay complete." << std::endl;
     } else if (cmd == "lookup") {
         uint32_t ip = IPPrefix::fromString(argv[2]).addr;
