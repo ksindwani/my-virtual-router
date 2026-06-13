@@ -1,0 +1,22 @@
+{
+  "static_routes": [
+    { 
+      "prefix": "172.16.0.0/16", 
+      "next_hop": "192.168.1.254", 
+      "pref": 10, 
+      "type": "Static" 
+    },
+    { 
+      "prefix": "8.8.8.0/24", 
+      "next_hop": "10.0.0.254", 
+      "pref": 5, 
+      "type": "Static" 
+    },
+    { 
+      "prefix": "0.0.0.0/0", 
+      "next_hop": "192.168.1.254", 
+      "pref": 100, 
+      "type": "Static" 
+    }
+  ]
+}
