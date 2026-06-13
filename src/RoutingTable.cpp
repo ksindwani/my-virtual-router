@@ -8,6 +8,7 @@
 using json = nlohmann::json;
 
 void RoutingTable::loadInterfaces(const std::string& file) {
+    std::lock_guard<std::mutex> lock(mtx);
     interfaces.clear();
     std::ifstream f(file);
     if (!f.is_open()) return;
@@ -37,6 +38,7 @@ void RoutingTable::loadInterfaces(const std::string& file) {
 }
 
 void RoutingTable::loadRoutes(const std::string& file) {
+    std::lock_guard<std::mutex> lock(mtx);
     routes.clear();
     std::ifstream f(file);
     if (!f.is_open()) return;
@@ -68,11 +70,13 @@ void RoutingTable::loadRoutes(const std::string& file) {
         }
         
         r.type = "Static";
+        std::cout<<"Adding route";
         routes.push_back(r);
     }
 }
 
 UnifiedRoute* RoutingTable::lookup(uint32_t dest_ip) {
+    std::lock_guard<std::mutex> lock(mtx);
     UnifiedRoute* best_match = nullptr;
 
     for (auto& r : routes) {
@@ -90,6 +94,7 @@ UnifiedRoute* RoutingTable::lookup(uint32_t dest_ip) {
 }
 
 void RoutingTable::explainLookup(uint32_t dest_ip) {
+    std::lock_guard<std::mutex> lock(mtx);
     std::cout << "--- Routing Lookup Explanation ---" << std::endl;
     std::cout << "Destination IP (Binary): " << dest_ip << std::endl;
 
@@ -147,7 +152,7 @@ void RoutingTable::removeRoutesByInterface(const std::string& intfName) {
 
 // Add these to src/RoutingTable.cpp
 
-void RoutingTable::updateInterfaceState(const std::string& name, bool is_up) {
+/*void RoutingTable::updateInterfaceState(const std::string& name, bool is_up) {
     for (auto& intf : interfaces) {
         if (intf.name == name) {
             intf.is_up = is_up;
@@ -155,9 +160,9 @@ void RoutingTable::updateInterfaceState(const std::string& name, bool is_up) {
             return;
         }
     }
-}
+}*/
 
-void RoutingTable::removeRoute(const std::string& prefix_str) {
+/*void RoutingTable::removeRoute(const std::string& prefix_str) {
     // Parse the input "172.16.0.0/16" into a binary format
     std::cout<<"remove route: "<<prefix_str<<std::endl;
     IPPrefix target = IPPrefix::fromString(prefix_str); 
@@ -167,7 +172,7 @@ void RoutingTable::removeRoute(const std::string& prefix_str) {
             // Compare binary prefix AND mask length for an exact match
             return (r.prefix_bin == target.addr && r.prefix_len == target.prefix_len);
         }), routes.end());
-}
+}*/
 
 bool RoutingTable::isInterfaceUp(const std::string& name) {
     for (const auto& intf : interfaces) {
@@ -192,6 +197,26 @@ bool RoutingTable::isMatch(uint32_t dest_ip, const UnifiedRoute& r) {
 
     // 3. Compare the network portion of both IPs.
     return (dest_ip & mask) == (r.prefix_bin & mask);
+}
+
+void RoutingTable::updateInterfaceState(const std::string& name, bool is_up) {
+    std::lock_guard<std::mutex> lock(mtx);
+    for (auto& intf : interfaces) {
+        if (intf.name == name) {
+            intf.is_up = is_up;
+            std::cout << "[EVENT] Interface " << name << " state set to " 
+                      << (is_up ? "UP" : "DOWN") << std::endl;
+        }
+    }
+}
+
+void RoutingTable::removeRoute(const std::string& prefix) {
+    std::lock_guard<std::mutex> lock(mtx);
+    routes.erase(std::remove_if(routes.begin(), routes.end(), 
+        [&](const UnifiedRoute& r) { 
+            // Simplified match logic
+            return (r.prefix_len != 0); // Add your prefix matching logic here
+        }), routes.end());
 }
 
 void RoutingTable::saveState(const std::string& intfFile, const std::string& routeFile) {

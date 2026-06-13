@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <mutex>
 #include "Utils.hpp"
 #include "Interface.hpp"
 
@@ -15,6 +16,7 @@ struct UnifiedRoute {
 class RoutingTable {
     std::vector<UnifiedRoute> routes;
     std::vector<Interface> interfaces; // Track interfaces state
+    std::mutex mtx;
 public:
     void addRoute(const UnifiedRoute& r) { routes.push_back(r); }
     void loadInterfaces(const std::string& filename);

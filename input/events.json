@@ -1,13 +1,13 @@
-{
-  "events": [
-    {
-      "type": "interface_state",
-      "interface": "eth0",
-      "state": false
-    },
-    {
-      "type": "route_remove",
-      "prefix": "172.16.0.0/16"
-    }
-  ]
-}
+[
+  {
+    "timestamp": "2026-06-13T10:00:00Z",
+    "type": "interface_state",
+    "target": "eth2",
+    "new_state": "down"
+  },
+  {
+    "timestamp": "2026-06-13T10:00:05Z",
+    "type": "route_remove",
+    "target": "172.16.0.0/16"
+  }
+]
