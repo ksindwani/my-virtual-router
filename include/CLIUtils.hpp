@@ -18,3 +18,5 @@ void printInterfaceTable(const std::vector<Interface>& intfList);
  * @param routeList The vector of UnifiedRoute objects to display
  */
 void printRouteTable(const std::vector<UnifiedRoute>& routeList);
+
+std::string binToIP(uint32_t bin_ip);

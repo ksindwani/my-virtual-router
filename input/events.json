@@ -1,0 +1,13 @@
+{
+  "events": [
+    {
+      "type": "interface_state",
+      "interface": "eth0",
+      "state": false
+    },
+    {
+      "type": "route_remove",
+      "prefix": "172.16.0.0/16"
+    }
+  ]
+}
