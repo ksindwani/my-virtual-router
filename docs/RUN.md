@@ -25,6 +25,7 @@
 9. Run `show-interfaces` - Validate eth2 is down - PASS
 10. Run `lookup 192.168.1.1` - Displays eth name of valid route
 
+### Test Log
 ```
  ./router-basic ./input/interfaces.json ./input/static_routes.json
 [DEBUG] Loaded eth0 (Admin: "up", Oper: "up") -> is_up: TRUE

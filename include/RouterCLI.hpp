@@ -19,5 +19,8 @@ void printInterfaceTable(const std::vector<Interface>& intfList);
  */
 void printRouteTable(const std::vector<UnifiedRoute>& routeList);
 
+// Convert uint32 back to network byte order
 std::string binToIP(uint32_t bin_ip);
+
+//check if ip_str is valid ip address
 bool isValidIP(const std::string& ip_str);
