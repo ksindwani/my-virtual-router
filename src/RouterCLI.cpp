@@ -21,12 +21,17 @@ void runShell(RoutingTable& rt) {
         ss >> cmd;
 
         if (cmd == "replay-events") {
-            std::string path = "input/events.json";
-            ss >> path; // e.g., "events.json"
+            std::string filename;
+            ss >> filename; // Captures the filename argument
             
-            std::ifstream file(path);
+            if (filename.empty()) {
+                std::cerr << "Error: Please provide a filename. Usage: replay-events <file>" << std::endl;
+                continue;
+            }
+
+            std::ifstream file(filename);
             if (!file.is_open()) {
-                std::cerr << "Error: Could not open " << path << std::endl;
+                std::cerr << "Error: Could not open " << filename << std::endl;
                 continue;
             }
             
@@ -40,7 +45,12 @@ void runShell(RoutingTable& rt) {
             }
             std::cout << "Event replay complete." << std::endl;
         } else if (cmd == "explain-lookup") {
-            std::string ip_str; ss >> ip_str;
+            std::string ip_str;
+            ss >> ip_str;
+            if (!isValidIP(ip_str)) {
+                std::cerr << "Error: Invalid IP address format: " << ip_str << std::endl;
+                continue; // Skip the lookup and return to shell prompt
+            }
             uint32_t ip = IPPrefix::fromString(ip_str).addr;
             rt.explainLookup(ip);
         } else if (cmd == "show-routes") {
@@ -48,7 +58,12 @@ void runShell(RoutingTable& rt) {
         } else if (cmd == "show-interfaces") {
             printInterfaceTable(rt.getInterfaces());
         } else if (cmd == "lookup") {
-            std::string ip_str; ss >> ip_str;
+            std::string ip_str;
+            ss >> ip_str;
+            if (!isValidIP(ip_str)) {
+                std::cerr << "Error: Invalid IP address format: " << ip_str << std::endl;
+                continue; // Skip the lookup and return to shell prompt
+            }
             uint32_t ip = IPPrefix::fromString(ip_str).addr;
             UnifiedRoute* match = rt.lookup(ip);
             if (match) {
@@ -98,6 +113,12 @@ void printRouteTable(const std::vector<UnifiedRoute>& routeList) {
                   << std::setw(15) << route.next_hop 
                   << std::setw(10) << route.type << "\n";
     }
+}
+
+bool isValidIP(const std::string& ip_str) {
+    struct sockaddr_in sa;
+    // inet_pton returns 1 on success, 0 on invalid format
+    return inet_pton(AF_INET, ip_str.c_str(), &(sa.sin_addr)) != 0;
 }
 
 std::string binToIP(uint32_t bin_ip) {

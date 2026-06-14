@@ -8,7 +8,7 @@
 using json = nlohmann::json;
 
 void RoutingTable::loadInterfaces(const std::string& file) {
-    std::lock_guard<std::mutex> lock(mtx);
+    //std::lock_guard<std::mutex> lock(mtx);
     interfaces.clear();
     std::ifstream f(file);
     if (!f.is_open()) return;
@@ -38,7 +38,7 @@ void RoutingTable::loadInterfaces(const std::string& file) {
 }
 
 void RoutingTable::loadRoutes(const std::string& file) {
-    std::lock_guard<std::mutex> lock(mtx);
+    //std::lock_guard<std::mutex> lock(mtx);
     routes.clear();
     std::ifstream f(file);
     if (!f.is_open()) return;
@@ -76,7 +76,7 @@ void RoutingTable::loadRoutes(const std::string& file) {
 }
 
 UnifiedRoute* RoutingTable::lookup(uint32_t dest_ip) {
-    std::lock_guard<std::mutex> lock(mtx);
+    //std::lock_guard<std::mutex> lock(mtx);
     UnifiedRoute* best_match = nullptr;
 
     for (auto& r : routes) {
@@ -94,9 +94,19 @@ UnifiedRoute* RoutingTable::lookup(uint32_t dest_ip) {
 }
 
 void RoutingTable::explainLookup(uint32_t dest_ip) {
-    std::lock_guard<std::mutex> lock(mtx);
+    //std::lock_guard<std::mutex> lock(mtx);
+    // 1. Prepare address structure
+    struct in_addr addr;
+    // Convert from host byte order to network byte order
+    addr.s_addr = htonl(dest_ip); 
+    
+    // 2. Convert to human-readable string
+    char ip_str[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &addr, ip_str, INET_ADDRSTRLEN);
+
     std::cout << "--- Routing Lookup Explanation ---" << std::endl;
-    std::cout << "Destination IP (Binary): " << dest_ip << std::endl;
+    std::cout << "[LOOKUP] Destination IP: " << ip_str << std::endl;
+    //std::cout << "Destination IP (Binary): " << dest_ip << std::endl;
 
     UnifiedRoute* best_match = nullptr;
 
@@ -122,8 +132,12 @@ void RoutingTable::explainLookup(uint32_t dest_ip) {
 
     // 4. Output Result
     if (best_match) {
+        struct in_addr addr;
+        addr.s_addr = htonl(best_match->prefix_bin);
+        char ip_str[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &addr, ip_str, INET_ADDRSTRLEN);
         std::cout << "Result: Match Found!" << std::endl;
-        std::cout << "Selected Prefix: " << best_match->prefix_bin << "/" << best_match->prefix_len << std::endl;
+        std::cout << "Selected Prefix: " << ip_str << "/" << best_match->prefix_len << std::endl;
         std::cout << "Route Type:      " << best_match->type << std::endl;
         std::cout << "Resolved To:     " << best_match->next_hop << std::endl;
         std::cout << "Criteria:        Best match (longest prefix length)." << std::endl;
@@ -158,7 +172,7 @@ bool RoutingTable::isMatch(uint32_t dest_ip, const UnifiedRoute& r) {
 }
 
 void RoutingTable::updateInterfaceState(const std::string& name, bool is_up) {
-    std::lock_guard<std::mutex> lock(mtx);
+    //std::lock_guard<std::mutex> lock(mtx);
     for (auto& intf : interfaces) {
         if (intf.name == name) {
             intf.is_up = is_up;

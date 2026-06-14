@@ -1,6 +1,3 @@
-### function documentation
-### approach/debug
-
 # High-Level Design: Event-Driven Routing Engine
 
 ## 1. Overview

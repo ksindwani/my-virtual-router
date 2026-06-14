@@ -20,3 +20,4 @@ void printInterfaceTable(const std::vector<Interface>& intfList);
 void printRouteTable(const std::vector<UnifiedRoute>& routeList);
 
 std::string binToIP(uint32_t bin_ip);
+bool isValidIP(const std::string& ip_str);

@@ -4,7 +4,7 @@ https://gemini.google.com/share/af7cd7c5a6d5
 
 ### Prompt 1
 ```
-Architectural Foundation
+Architectural/Design
 "I am building a virtual router in C++ that runs in user space. Please define a clean project structure. 
 1. Create a Header-only or simple class-based design for: 
    - Interface (storing name, IP/prefix, state, and stats).
@@ -71,6 +71,8 @@ Architectural/Design
    - RoutingTable (managing the collection of routes).
 2. Provide a Makefile that uses g++ to compile the project into a single binary 'router-basic'.
 3. Include instructions for integrating a JSON library like 'nlohmann/json' (header-only) to parse the provided JSON files." 
+
+```
 A robust, modular approach is essential for a user-space router. By separating the data models from the management logic, you maintain clean boundaries for future features like routing protocols or CLI integration.
 1. Project Structure
 Organize your source code to separate headers from implementation files:
@@ -172,12 +174,16 @@ Implementation Tips
 •	Encapsulation: While I provided structs for data holding, use the .cpp files to implement logic like interface state transitions or route sorting within RoutingTable.
 •	Performance: For a production-grade router in C++, consider using a Trie (Prefix Tree) for your RoutingTable instead of a std::vector to achieve lookup time (where is the prefix length) rather than linear scanning.
 Would you like to explore how to implement a basic Longest Prefix Match (LPM) algorithm using a Trie structure for this router?
+```
+
 Parsing and Data Structures
 "Implement the logic to parse 'interfaces.json' and 'static_routes.json' into memory:
 1. Create a function to derive 'Connected' routes from the interface IP prefixes.
 2. Store all routes (Connected and Static) in a unified structure within the RoutingTable class.
 3. Write a helper function to convert IPv4 strings (e.g., '192.168.1.0/24') into a binary representation 
    (e.g., uint32_t) to facilitate bitwise operations for routing decisions."
+
+```
 To manage your routing table effectively, we will centralize the parsing logic and use bitwise masking for your binary conversions.
 1. IPv4 Binary Conversion Helper
 Using inet_pton is the standard, safest way to handle IPv4 strings. For the bitwise operations, store the IP and the prefix length separately.
@@ -290,6 +296,8 @@ Summary of Workflow
 3.	Implement: Add the logic inside src/RoutingTable.cpp.
 4.	Execute: Call table.loadFromJSON(...) inside your src/main.cpp after initializing your RoutingTable object.
 Does this structure clarify where the bits of logic belong, or would you like to see how the main.cpp orchestrates these calls?
+```
+
 Lookup Engine (Longest-Prefix Match)
 "Implement the Longest-Prefix Match (LPM) algorithm for this router:
 1. Create a 'lookup(destination_ip)' function that returns the best route based on the longest matching mask.
@@ -298,6 +306,8 @@ Lookup Engine (Longest-Prefix Match)
    - The route selected (or failure reason).
    - The criteria used (e.g., mask length, preference if masks are equal).
    - Which interface the route resolves to."
+
+```
 To implement an effective Longest-Prefix Match (LPM) engine, you must evaluate all routes that match the destination IP and select the one with the highest prefix length (most specific match). If lengths are identical, you resolve by Administrative Distance (Preference).
 1. Implementation in RoutingTable
 Add these functions to your RoutingTable.hpp and implement them in src/RoutingTable.cpp.
@@ -358,6 +368,8 @@ Key Design Considerations for your Engine
 o	Default Route: Always ensure you have a "0.0.0.0/0" entry. Your current logic will treat it as a valid match with length 0, serving as the fallback if no other routes match.
 o	Tie-breaking: In real hardware routers, if prefix length and preference are identical, the router might load-balance across multiple interfaces. For this basic version, picking the first found or a configured primary is sufficient.
 Since you are managing both static and connected routes, would you like to see how to incorporate a Preference (Administrative Distance) into the UnifiedRoute structure to handle scenarios where the same prefix is learned from different sources?
+```
+
 Router CLI Implementation
 "Create a simple command-line argument parser for the main function to handle:
 - 'show-interfaces': Iterate through interfaces and print status and RX/TX stats in a formatted table.
@@ -365,6 +377,8 @@ Router CLI Implementation
 - 'lookup <ip>': Trigger the LPM lookup.
 - 'explain-lookup <ip>': Output the detailed breakdown of the routing decision.
 Ensure the output is clean, using standard C++ 'iomanip' for table formatting."
+
+```
 To create a functional Command-Line Interface (CLI), you can use a simple if-else block in your main.cpp to parse argv. Combining this with <iomanip> allows you to generate professional-looking, aligned tables.
 1. Formatting Logic
 Using std::setw and std::left ensures that your columns remain aligned regardless of the variable length of your interface names or IP addresses.
@@ -506,7 +520,11 @@ show-interfaces / show-routes formatting	src/CLIUtils.cpp
 Command Line Parsing (argv)	src/main.cpp
 This separation of concerns makes your router much easier to maintain as a System Software Engineer. You can now modify the lookup algorithm in RoutingTable.cpp without risking the breakage of your CLI output in CLIUtils.cpp.
 Would you like the code implementation for the CLIUtils.cpp file, or are you ready to start writing the main.cpp logic?
+```
+
 give me updated code for all the above files
+
+```
 To implement the design we have discussed, here is the consolidated code structure.
 1. include/Utils.hpp
 C++
@@ -685,7 +703,10 @@ Improvements made:
 •	Cleanup: The clean command now recursively removes the obj/ directory (rm -rf) and the router-basic binary, ensuring a pristine state for your next build.
 To use this, simply run make to build, or make clean when you want to reset your build environment.
 Would you like to add a "debug" target to the Makefile that includes the -g flag for use with gdb or lldb?
+```
+
 how to test this code now
+```
 To test your virtual router project, you need to create the environment (directories and files) and then provide input data. Since your code relies on interfaces.json and static_routes.json, you must create those first.
 1. Set Up the Environment
 Ensure your directory structure matches what we defined:
@@ -843,7 +864,10 @@ Troubleshooting Guide
 •	"Invalid IP" error: The current Utils.hpp expects valid IPv4 strings. Ensure your JSON files do not have leading/trailing spaces in the IP fields.
 •	Linking error: If you receive errors during make, ensure that src/main.cpp and your src/ files include the correct header paths defined in the Makefile's -Iinclude flag.
 Would you like to write a simple shell script (test.sh) to run these commands sequentially and verify the output automatically?
+```
+
 give me input inside inrefaces and staic_routes
+```
 To ensure your loadFromJSON function correctly parses your data, your JSON files must be structured as simple arrays of objects. Here are the templates you should use.
 1. interfaces.json
 This file defines your locally connected networks. The ip_prefix field is what you will parse to create your "Connected" routes.
@@ -894,6 +918,8 @@ Important Integration Notes:
 •	Consistency: Ensure the field names in these JSON files (like ip_prefix, prefix, next_hop) exactly match the string keys used in your src/RoutingTable.cpp code, otherwise the nlohmann::json parser will throw an exception.
 •	Validation: If you plan to expand this, you might want to add a check in your loadFromJSON function to ensure that pref (preference) is a valid integer and that the prefix string contains a valid / separator.
 Would you like help writing a small validation check to ensure these JSON files are formatted correctly before the router attempts to load them?
+```
+
 i have created json input files inside input folder in root directory
 what changes to be done in code
 Since you have moved your JSON files into an input/ folder, you need to update the file paths in your src/main.cpp so the RoutingTable class knows where to find them.
