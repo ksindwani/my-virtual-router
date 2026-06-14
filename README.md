@@ -28,6 +28,6 @@ This project implements network routing engine in C++. The router maintains an i
 ├── docs/
   ├── RUN.md              # Compilation and execution instructions with test logs
   ├── TEST.md             # Test cases and validation suite with sample run logs
-  ├── DESIGN.md           # Test cases and validation suite with sample run logs
+  ├── DESIGN.md           # Design for router implementation
   ├── AI_USAGE.md         # AI prompts and response history in choronological order (I have added  prompts given by me to LLM for starting the implementation at the top with share link followed by complete chat)
 └── README.md           # Project documentation
